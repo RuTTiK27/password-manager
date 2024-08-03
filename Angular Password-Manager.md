@@ -10,13 +10,13 @@ Steps to create app
 2. Create new app by command **ng** **new** [APP NAME]  
 
 ```
-ng new Password-Manager
+>ng new Password-Manager
 ```
 
 1. Open app in Visual Studio Code by command **code .**
 
 ```
-code .
+>code .
 ```
 
 1. Configure your project add necessary packages or libraries that you want to use. Here we are taking an example of tailwind CSS that we are going to use in our project. (Tailwind will helps us in designing)
@@ -25,8 +25,8 @@ code .
     3. **Install Tailwind CSS**
     
     ```
-    npm install -D tailwindcss postcss autoprefixer
-    npx tailwindcss init
+    >npm install -D tailwindcss postcss autoprefixer
+    >npx tailwindcss init
     ```
     
     d. **Configure your template paths**
@@ -558,3 +558,116 @@ export const routes: Routes = [
     {path:'password-list',component:PasswordListComponent}
 ];
 ```
+
+> We have to store passwords for particular site so for that we have few approaches in firebase. in sql that is simple like we have passwords table and it contains foreign key of site table. below i am mentioning in sql way.
+> 
+
+Ex - SiteMaster
+
+| SiteNo | SiteName |
+| --- | --- |
+| 1 | GoDaddy.com |
+| 2 | DigitalOcean |
+
+Ex - PasswordMaster
+
+| PasswordNo | Password | SiteNo |
+| --- | --- | --- |
+| 1 | ABC | 1 |
+| 2 | DEF | 1 |
+| 3 | UVW | 2 |
+| 4 | XYZ | 2 |
+
+Firebase approaches:
+
+**Approach 1:** Create array field inside sites document and in that create map data type so you can store key value pairs. but it is not good approach. ❌ because storing data like this is not good practice. as well as when you have to get particular data at that time while writing queries you will get difficulties.
+
+![Untitled](Angular%20Password-Manager%20dae847a304bd49e3b043becb9db1323e/Untitled.png)
+
+![Untitled](Angular%20Password-Manager%20dae847a304bd49e3b043becb9db1323e/Untitled%201.png)
+
+**Approach 2:** This approach is more likely SQL approach in this we can create another separate collection for password and we will add the site document id inside the password document to create the relationship between the site collection and password collection. This approach is ok but little bit difficult to write queries for retrieving and inserting data.❌
+
+![Untitled](Angular%20Password-Manager%20dae847a304bd49e3b043becb9db1323e/Untitled%202.png)
+
+**Approach 3:** Firebase provides facility of sub collection i.e. collection inside document. so we can create passwords collection inside the site document. ✅ Using this approach we can write Angular fire queries easily. This approach is highly recommended while working with firestore. 
+
+![Untitled](Angular%20Password-Manager%20dae847a304bd49e3b043becb9db1323e/Untitled%203.png)
+
+[Untitled](Angular%20Password-Manager%20dae847a304bd49e3b043becb9db1323e/Untitled.mp4)
+
+1. If you have notice we are storing password in encrypted form so for that we have to install package for that and the package name is **crypto-js**.
+
+```
+>npm i crypto-js
+```
+
+1. Now in order to encrypt the password using crypto-js. we required unique secrete key. so go to google and search “encryption key generator”. Take the Encryption key 256 bit.
+2. Now open the **login.component.html** file and add this code.
+
+```html
+<section class="bg-gray-50">
+    <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto h-screen">
+        <div class="w-full border-4 border-gray-900 bg-white rounded-lg shadow mx-w-md">
+            <div class="p-6 space-y-6">
+                <h1 class="text-2xl font-bold text-gray-900"> Login to your account </h1>
+
+                <div *ngIf="isError" class="p-5 my-3 bg-red-100 text-red-900">
+                    The username or Password is Wrong
+                </div>
+
+                <form #f="ngForm" class="space-y-6" (ngSubmit)="onSubmit(f.value)">
+                    <div>
+                        <label for="" class="block mb-2 text-sm font-medium text-gray-900">
+                            Your Email
+                        </label>
+                        <input ngModel type="email" name="email" placeholder="name@company.com" class="block w-full p-2.5 text-sm bg-gray-50 border-4 border-gray-900 text-gray-900 rounded-lg">
+                        <label for="" class="block mb-2 text-sm font-medium text-gray-900">
+                            Password
+                        </label>
+                        <input ngModel type="password" name="password" placeholder="********" class="block w-full p-2.5 text-sm bg-gray-50 border-4 border-gray-900 text-gray-900 rounded-lg">
+                    </div>
+                    <button class="w-full text-white bg-gray-800 hover:bg-gray-900 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+                        Sign in
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+```
+
+1. Now open the **login.component.ts** file and add this code.
+
+```tsx
+import { Component } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { PasswordManagerService } from '../password-manager.service';
+import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [FormsModule,CommonModule],
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.css'
+})
+export class LoginComponent {
+
+  isError:boolean = false;
+
+  constructor(private passwordManagerService:PasswordManagerService,private router:Router){}
+
+  onSubmit(values:any){
+    this.passwordManagerService.login(values.email,values.password).then(()=>{
+      this.router.navigate(['/site-list']);
+    }).catch((err)=>{
+      this.isError = true;
+    })
+  }
+}
+```
+
+> We are using firebase Authentication so we have to enable it. Firebase has several methods for authentication we are going to use **Email/Password.** After enabling create new user by providing email and password.
+>
